@@ -1,0 +1,30 @@
+services:
+  mitmproxy:
+    image: python:3
+    expose:
+      - "8080"
+    volumes:
+      - ./mitmdump/:/data
+  chromium:
+    image: kasmweb/chromium:1.14.0-rolling
+    expose:
+      - "6901"
+    environment:
+      - LAUNCH_URL=--disable-dev-shm-usage --disable-save-password-bubble --lang=$LANGUAGE --kiosk $TARGET_URL
+      - VNCOPTIONS=-geometry 1920x1080 -DLP_Log verbose
+      - VNC_PW=asdffdsa
+      - HTTP_PROXY=http://mitmproxy:8080
+      - HTTPS_PROXY=http://mitmproxy:8080
+    env_file:
+      - .env
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+    env_file:
+      - .env

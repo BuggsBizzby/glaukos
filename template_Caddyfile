@@ -1,0 +1,8 @@
+{$SITE_ADDRESS} {
+
+log {
+    output stdout
+    format console
+    level DEBUG
+}
+}

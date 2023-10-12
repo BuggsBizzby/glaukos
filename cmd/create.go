@@ -175,7 +175,7 @@ func updateCaddy(envName string) error {
     handleDirective := fmt.Sprintf(`
 handle /%s/* {
     reverse_proxy * {
-        to https://%s_chromium_1:6901
+        to https://%s_chromium:6901
         header_up Authorization "Basic a2FzbV91c2VyOmFzZGZmZHNh"
         transport http {
             tls

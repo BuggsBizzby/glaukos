@@ -1,12 +1,12 @@
 services:
   mitmproxy:
-    image: python:3
+    image: glaukos_mitmproxy:latest
     expose:
       - "8080"
     volumes:
       - ./mitmdump/:/data
   chromium:
-    image: kasmweb/chromium:1.14.0-rolling
+    image: glaukos_chromium:latest
     expose:
       - "6901"
     environment:

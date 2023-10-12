@@ -14,8 +14,8 @@ import (
 
 // Constants for Docker Images
 
-const mitmproxyImage = "python:3"
-const chromiumImage = "kasmweb/chromium:1.14.0-rolling"
+const mitmproxyImage = "glaukos_mitmproxy:latest"
+const chromiumImage = "glaukos_chromium:latest"
 
 const mitmproxyRepo = "python"
 const mitmproxyTag = "3"

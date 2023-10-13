@@ -145,7 +145,7 @@ func generateCompose(envName string) string {
 
     // Create unique directory for new environment's config files
     configDir := fmt.Sprintf("./docker/configs/%s", envName)
-    if err := os.MkdirAll(configDir, 0755); err != nil {
+    if err := os.MkdirAll(configDir, 0777); err != nil {
         log.Printf("Failed to create config directory. Error: %s\n", err)
         return ""
     }

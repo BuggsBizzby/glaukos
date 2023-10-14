@@ -1,14 +1,23 @@
+networks:
+  mynet:
+    driver: bridge
+
 services:
   mitmproxy:
     image: glaukos_mitmproxy:latest
     expose:
       - "8080"
+    networks:
+      - mynet
     volumes:
       - ./mitmdump/:/data
-  chromium:
+        
+  chromium-{{env_name}}:
     image: glaukos_chromium:latest
     expose:
       - "6901"
+    networks:
+      - mynet
     environment:
       - LAUNCH_URL=--disable-dev-shm-usage --disable-save-password-bubble --lang=$LANGUAGE --kiosk $TARGET_URL
       - VNCOPTIONS=-geometry 1920x1080 -DLP_Log verbose
@@ -22,6 +31,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - mynet
     volumes:
       - ../Caddyfile:/etc/caddy/Caddyfile
       - ./caddy_data:/data

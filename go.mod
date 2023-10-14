@@ -1,6 +1,10 @@
 module glaukos
 
-go 1.23
+// If running on Arch
+go 1.21.3
+
+// If running on Ubuntu
+// go 1.23
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

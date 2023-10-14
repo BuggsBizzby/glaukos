@@ -173,23 +173,22 @@ func updateCaddy(envName string) error {
 
     // Create handle directorive for new environment
     handleDirective := fmt.Sprintf(`
-handle /%s/* {
+    redir /%s / 
     reverse_proxy * {
-        to https://%s_chromium:6901
+            to https://chromium-%s:6901
         header_up Authorization "Basic a2FzbV91c2VyOmFzZGZmZHNh"
         transport http {
             tls
             tls_insecure_skip_verify
         }
     }
-}
     `, envName, envName)
 
     // Insert handle directive above log section
     updatedCaddyContent := strings.Replace(string(caddyContent), "\nlog {", handleDirective+"\n\nlog {", 1)
     
     // Save updated Caddyfile
-    err = ioutil.WriteFile(caddyFilePath, []byte(updatedCaddyContent), 0644)
+    err = ioutil.WriteFile(caddyFilePath, []byte(updatedCaddyContent), 0777)
     if err != nil {
         log.Printf("Failed to write updated Caddyfile: %s", err)
         return err

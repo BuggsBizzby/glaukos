@@ -1,6 +1,6 @@
 networks:
   mynet:
-    driver: bridge
+    external: true
 
 services:
   mitmproxy:
@@ -24,18 +24,5 @@ services:
       - VNC_PW=asdffdsa
       - HTTP_PROXY=http://mitmproxy:8080
       - HTTPS_PROXY=http://mitmproxy:8080
-    env_file:
-      - .env
-  caddy:
-    image: caddy:latest
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - mynet
-    volumes:
-      - ../Caddyfile:/etc/caddy/Caddyfile
-      - ./caddy_data:/data
-      - ./caddy_config:/config
     env_file:
       - .env

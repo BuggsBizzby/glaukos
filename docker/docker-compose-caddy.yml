@@ -1,0 +1,18 @@
+version: '3'
+
+networks:
+  mynet:
+    external: true
+
+services:
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - mynet
+    volumes:
+      - ./configs/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy_data:/data
+      - ./caddy_config:/config

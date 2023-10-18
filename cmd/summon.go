@@ -34,16 +34,14 @@ func buildDockerImage(imageName, targetName string) error {
     return err
 }
 
-// Used in Run function to generate Caddyfile content and supply it with the user-given siteAddress value
-func modifyCaddyfile(siteAddress string) error {
-    content := fmt.Sprintf(`%s {
-
-log {
-    output stdout
-    format console
-    level DEBUG
-}
-}`, siteAddress)
+// Used in Run function to generate Caddyfile content 
+// To avoid the LetsEncrypt rate limit use the following as the content for the Caddyfile when running multiple tests
+// {
+//  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+// }
+func generateCaddyfile() error {
+    content := fmt.Sprintf(`
+`)
 
     return ioutil.WriteFile("./docker/configs/Caddyfile", []byte(content), 0777)
 }
@@ -71,10 +69,9 @@ func startCaddyInstance() error {
 var summonCmd = &cobra.Command{
 	Use:   "summon",
 	Short: "Build the required docker images",
-	Long: `Summon Glaukos from the watery depths to endow you with the necessary abilities to conquer the sea. Dude, it just adds the mitmproxy image and the kasmweb/chromium image.`,
+	Long: `Summon Glaukos from the watery depths to endow you with the necessary abilities to conquer the sea. Build the docker images for the chromium service, mitmproxy service, and Caddy service.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-        siteAddress, _ := cmd.Flags().GetString("siteAddress")
 
         // Check if the Docker image already exists
         imageExistsCmd := exec.Command("docker", "image", "ls", "{{.Repository}}::{{.Tag}}")
@@ -108,7 +105,7 @@ var summonCmd = &cobra.Command{
 
         // Update and generate the Caddyfile
         log.Println("Generating content for Caddyfile..")
-        if err := modifyCaddyfile(siteAddress); err != nil {
+        if err := generateCaddyfile(); err != nil {
             log.Println("Error creating Caddyfile:", err)
             return  
         }
@@ -137,6 +134,4 @@ var summonCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(summonCmd)
-    summonCmd.Flags().StringP("siteAddress", "a", "", "The domain that has been aliased as wilcard record for your host IP. Ex: `evilcorp.com`")
-    summonCmd.MarkFlagRequired("siteAddress")
 }

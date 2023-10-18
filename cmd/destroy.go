@@ -10,7 +10,7 @@ import (
 	"fmt"
     "os/exec"
     "io/ioutil"
-    "strings"
+    "regexp"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,6 @@ var destroyCmd = &cobra.Command{
 and usage of using your command. For example:`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("destroy called")
 
         // If list flag is provided, list the environments
         if listEnvironments {
@@ -72,6 +71,7 @@ func listAvailableEnvironments() {
     }
 
     // List environments
+    fmt.Println("Environments:")
     for _, d := range dirs {
         if d.IsDir() {
             fmt.Println(d.Name())
@@ -137,41 +137,49 @@ func removeCaddyfileRoute(envName string) {
 
     // If all environments are to be destroyed, reset Caddyfile
     if envName == "all" {
-        // Define basic Caddyfile content
-        originalCaddyfileContent := `{$SITE_ADDRESS} {
-
-log {
-    output stdout
-    format console
-    level DEBUG
-}
-}`
-        // Writing original content to Caddyfile
-        err = ioutil.WriteFile("./docker/configs/Caddyfile", []byte(originalCaddyfileContent), 0777)
+        // Wipe Caddyfile clean
+        err = ioutil.WriteFile("./docker/configs/Caddyfile", []byte(""), 0777)
         if err != nil {
             log.Fatalf("Failed to reset Caddyfile: %s", err)
         }
+        // Reload Caddy Service
+        updateCaddyService()
         return
     }
 
     // Removing route for specific environment
-    // Creating variable 'routeIdentifier' to look for the line where specific route is located
-    routeIdentifier := fmt.Sprintf("handle /%s/*", envName)
-    startIndex := strings.Index(string(caddyFileContent), routeIdentifier)
+    routeRegexPattern := fmt.Sprintf(`(?ms)^%s\..*?{.*?log {\s*output stdout\s*format console\s*level DEBUG\s*}\s*}\s*\n`, regexp.QuoteMeta(envName))
+    re := regexp.MustCompile(routeRegexPattern)
 
-    if startIndex != -1 {
-        endIndex := strings.Index(string(caddyFileContent[startIndex:]), "\n\n") + startIndex
-        if endIndex == -1 {
-            endIndex = len(caddyFileContent)
-        }
-
-        updatedContent := string(caddyFileContent[:startIndex]) + string(caddyFileContent[endIndex:])
+        updatedContent := re.ReplaceAllString(string(caddyFileContent), "")
+        
         err = ioutil.WriteFile("./docker/configs/Caddyfile", []byte(updatedContent), 0777)
         if err != nil {
             log.Fatalf("Failed to remove route from Caddyfile: %s", err)
         }
-    }
 }
+
+func updateCaddyService() error {
+    // Command to take the Caddy service down
+    downCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "down")
+    downOutput, downErr := downCmd.CombinedOutput()
+    if downErr != nil {
+        log.Println("Failed to take Caddy service down:", string(downOutput))
+        return downErr
+    }
+
+    // Command to bring Caddy service back up
+    upCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "up", "-d")
+    upOutput, upErr := upCmd.CombinedOutput()
+    if upErr != nil {
+        log.Println("Failed to bring Caddy service up:", string(upOutput))
+        return upErr
+    }
+
+    log.Println("Caddy reloaded successfully!")
+    return nil
+}
+
 
 
 

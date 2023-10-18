@@ -66,8 +66,8 @@ func init() {
     // Defining flags
     createCmd.Flags().IntP("environments", "e", 1, "Number of environments to create")
     createCmd.MarkFlagRequired("environments")
-    createCmd.Flags().StringP("prefix", "p", "", "Prefix for naming environments")
-    createCmd.Flags().StringSliceP("names", "n", []string{}, "Comma-separated list of environment names")
+    createCmd.Flags().StringP("prefix", "p", "", "Prefix for naming environments. The given prefix is appended with a number incrementally to match the number of environments. These will be used as subdomains for routing purposes. Ex: A prefix of 'test' will become test1.evilcorp.com")
+    createCmd.Flags().StringSliceP("names", "n", []string{}, "Comma-separated list of environment names. These will be used as subdomains for routing purposes. Ex: 'sharepoint' becomes sharepoint.evilcorp.com")
     createCmd.Flags().StringP("targetURL", "u", "", "URL of the target website to be displayed to the victim - Ex. 'https://login.microsoftonline.com'")
     createCmd.MarkFlagRequired("targetURL")
 }

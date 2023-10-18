@@ -137,6 +137,6 @@ var summonCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(summonCmd)
-    summonCmd.Flags().StringP("siteAddress", "a", "", "The domain used for routing purposes in the Caddy config file. Ex: `sharepoint.evilcorp.com`")
+    summonCmd.Flags().StringP("siteAddress", "a", "", "The domain that has been aliased as wilcard record for your host IP. Ex: `evilcorp.com`")
     summonCmd.MarkFlagRequired("siteAddress")
 }

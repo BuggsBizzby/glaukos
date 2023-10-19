@@ -27,6 +27,7 @@ COPY --from=mitmproxy /root/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca
 RUN update-ca-certificates
 
 WORKDIR /usr/share/kasmvnc/www/app/images/icons
+RUN rm *
 COPY favicon.png .
 
 WORKDIR /usr/share/kasmvnc/www

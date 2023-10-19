@@ -33,6 +33,9 @@ WORKDIR /usr/share/kasmvnc/www
 COPY vnc_visual_fixes.py .
 RUN python3 /usr/share/kasmvnc/www/vnc_visual_fixes.py
 
+WORKDIR /usr/share/kasmvnc/www/dist/images
+RUN rm *
+
 USER kasm-user
 
 RUN set -x

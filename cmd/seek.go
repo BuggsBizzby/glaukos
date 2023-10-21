@@ -13,7 +13,7 @@ import (
 // seekCmd represents the seek command
 var seekCmd = &cobra.Command{
 	Use:   "seek",
-	Short: "A brief description of your command",
+	Short: "Search through the mitmproxy .dmp files for user credentials, if found print them to the screen",
 	Long: ``,
 
 	Run: func(cmd *cobra.Command, args []string) {

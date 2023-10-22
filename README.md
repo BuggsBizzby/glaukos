@@ -1,2 +1,2 @@
 <img src="https://github.com/BuggsBizzby/glaukos/blob/main/assets/glaukos.jpg" >
-# glaukos
+<h1>Glaukos: Lord of the Phishermen</h1>

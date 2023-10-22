@@ -39,12 +39,15 @@ and usage of using your command. For example:`,
 
         envName := args[0]
 
+        // Check for burn-it-down flag
+        burnItDown, _ := cmd.Flags().GetBool("burn-it-down")
+
         // Remove all environments
         if envName == "all" {
-            destroyAllEnvironments()
+            destroyAllEnvironments(burnItDown)
         } else {
             // Remove specific environment
-            destroySpecificEnvironment(envName)
+            destroySpecificEnvironment(envName, burnItDown)
         }
 
         // Update Caddyfile
@@ -57,6 +60,7 @@ and usage of using your command. For example:`,
 func init() {
     rootCmd.AddCommand(destroyCmd)
     destroyCmd.Flags().BoolVarP(&listEnvironments, "list", "l", false, "List available environments")
+    destroyCmd.Flags().Bool("burn-it-down", false, "Remove environment directories and associated files")
 
 }
 
@@ -79,7 +83,7 @@ func listAvailableEnvironments() {
     }
 }
 
-func destroyAllEnvironments() {
+func destroyAllEnvironments(burnItDown bool) {
     // Defining path to environment directories
     envDirPath := "./docker/configs"
     envDirs, err := os.ReadDir(envDirPath)
@@ -98,33 +102,35 @@ func destroyAllEnvironments() {
             }
         }
     }
-
-    // Looping through and removing all directories files for each environment
-    for _, envDir := range envDirs {
-        if envDir.IsDir() {
-            envPath := fmt.Sprintf("%s/%s", envDirPath, envDir.Name())
-            fmt.Printf("Removing directories and files for environment: %s\n", envDir.Name())
-            if err := os.RemoveAll(envPath); err != nil {
-                log.Printf("Error removing directory for environment: %s: %s\n", envDir.Name(), err)
+    if burnItDown {
+        // Looping through and removing all directories files for each environment
+        for _, envDir := range envDirs {
+            if envDir.IsDir() {
+                envPath := fmt.Sprintf("%s/%s", envDirPath, envDir.Name())
+                fmt.Printf("Removing directories and files for environment: %s\n", envDir.Name())
+                if err := os.RemoveAll(envPath); err != nil {
+                    log.Printf("Error removing directory for environment: %s: %s\n", envDir.Name(), err)
+                }
             }
         }
     }
-
 }
 
-func destroySpecificEnvironment(envName string) {
+func destroySpecificEnvironment(envName string, burnItDown bool) {
     // Stop specified environment container
     stopCmd := exec.Command("docker-compose", "-f", fmt.Sprintf("./docker/configs/%s/docker-compose.yml", envName), "down")
     if err := stopCmd.Run(); err != nil {
         log.Printf("Error stopping container for environment: %s: %s\n", envName, err)
     }
 
-    // Remove environment directory
-    // Defining environment directory
-    envPath := fmt.Sprintf("./docker/configs/%s", envName)
-    // Removing environment directory and all files
-    if err := os.RemoveAll(envPath); err != nil {
-        log.Printf("Error removing directory for environment: %s: %s\n", envName, err)
+    if burnItDown {
+        // Remove environment directory
+        // Defining environment directory
+        envPath := fmt.Sprintf("./docker/configs/%s", envName)
+        // Removing environment directory and all files
+        if err := os.RemoveAll(envPath); err != nil {
+            log.Printf("Error removing directory for environment: %s: %s\n", envName, err)
+        }
     }
 }
 

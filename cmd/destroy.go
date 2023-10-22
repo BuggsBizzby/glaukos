@@ -60,7 +60,7 @@ and usage of using your command. For example:`,
 func init() {
     rootCmd.AddCommand(destroyCmd)
     destroyCmd.Flags().BoolVarP(&listEnvironments, "list", "l", false, "List available environments")
-    destroyCmd.Flags().Bool("burn-it-down", false, "Remove environment directories and associated files")
+    destroyCmd.Flags().Bool("burn-it-down", "b", false, "Remove environment directories and associated files")
 
 }
 

@@ -15,6 +15,7 @@ import (
 )
 
 var listEnvironments bool
+var burnItDownFlag bool
 
 // destroyCmd represents the destroy command
 var destroyCmd = &cobra.Command{
@@ -40,7 +41,7 @@ and usage of using your command. For example:`,
         envName := args[0]
 
         // Check for burn-it-down flag
-        burnItDown, _ := cmd.Flags().GetBool("burn-it-down")
+        burnItDown, _ := burnItDownFlag
 
         // Remove all environments
         if envName == "all" {
@@ -60,7 +61,7 @@ and usage of using your command. For example:`,
 func init() {
     rootCmd.AddCommand(destroyCmd)
     destroyCmd.Flags().BoolVarP(&listEnvironments, "list", "l", false, "List available environments")
-    destroyCmd.Flags().Bool("burn-it-down", "b", false, "Remove environment directories and associated files")
+    destroyCmd.Flags().BoolVarP(&burnItDownFlag, "burn-it-down", "b", false, "Remove environment directories and associated files")
 
 }
 

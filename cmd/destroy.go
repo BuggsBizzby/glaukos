@@ -41,7 +41,7 @@ and usage of using your command. For example:`,
         envName := args[0]
 
         // Check for burn-it-down flag
-        burnItDown, _ := burnItDownFlag
+        burnItDown := burnItDownFlag
 
         // Remove all environments
         if envName == "all" {

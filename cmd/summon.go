@@ -24,52 +24,13 @@ const chromiumRepo = "kasmweb/chromium"
 const chromiumTag = "1.14.0-rolling"
 const caddyCompose = "./docker/docker-compose-caddy.yml"
 
-// Used in Run function to build the desired docker images
-func buildDockerImage(imageName, targetName string) error {
-    cmd := exec.Command("docker", "build", "--file", "Dockerfile", "--target", targetName, "-t", imageName, "./docker")
-    output, err := cmd.CombinedOutput()
-    if err != nil {
-        log.Println(string(output))
-    }
-    return err
-}
-
-// Used in Run function to generate Caddyfile content 
-// To avoid the LetsEncrypt rate limit use the following as the content for the Caddyfile when running multiple tests
-// {
-//  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
-// }
-func generateCaddyfile() error {
-    content := fmt.Sprintf(`
-`)
-
-    return ioutil.WriteFile("./docker/configs/Caddyfile", []byte(content), 0777)
-}
-
-// Used in Run function to create the custom docker network and start the Caddy instance
-func startCaddyInstance() error {
-    // Create custom docker network
-    createNetworkCmd := exec.Command("docker", "network", "create", "mynet")
-    networkOutput, networkErr := createNetworkCmd.CombinedOutput()
-    if networkErr != nil {
-        log.Println(string(networkOutput))
-    }
-
-    // Build Caddy image
-    cmd := exec.Command("docker-compose", "-f", caddyCompose, "up", "-d")
-    output, err := cmd.CombinedOutput()
-    if err != nil {
-        log.Println(string(output))
-    }
-    return err
-}
 
 
 // summonCmd represents the summon command
 var summonCmd = &cobra.Command{
 	Use:   "summon",
 	Short: "Build the required docker images",
-	Long: `Summon Glaukos from the watery depths to endow you with the necessary abilities to conquer the sea. Build the docker images for the chromium service, mitmproxy service, and Caddy service.`,
+	Long: `Build the necessary docker images for the chromium service, mitmproxy service, and Caddy service.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -131,7 +92,46 @@ var summonCmd = &cobra.Command{
 	},
 }
 
-
 func init() {
 	rootCmd.AddCommand(summonCmd)
+}
+
+// Used in Run function to build the desired docker images
+func buildDockerImage(imageName, targetName string) error {
+    cmd := exec.Command("docker", "build", "--file", "Dockerfile", "--target", targetName, "-t", imageName, "./docker")
+    output, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Println(string(output))
+    }
+    return err
+}
+
+// Used in Run function to generate Caddyfile content 
+// To avoid the LetsEncrypt rate limit use the following as the content for the Caddyfile when running multiple tests
+// {
+//  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+// }
+func generateCaddyfile() error {
+    content := fmt.Sprintf(`
+    `)
+
+    return ioutil.WriteFile("./docker/configs/Caddyfile", []byte(content), 0777)
+}
+
+// Used in Run function to create the custom docker network and start the Caddy instance
+func startCaddyInstance() error {
+    // Create custom docker network
+    createNetworkCmd := exec.Command("docker", "network", "create", "mynet")
+    networkOutput, networkErr := createNetworkCmd.CombinedOutput()
+    if networkErr != nil {
+        log.Println(string(networkOutput))
+    }
+
+    // Build Caddy image
+    cmd := exec.Command("docker-compose", "-f", caddyCompose, "up", "-d")
+    output, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Println(string(output))
+    }
+    return err
 }

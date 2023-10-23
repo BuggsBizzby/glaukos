@@ -19,10 +19,23 @@ var burnItDownFlag bool
 
 // destroyCmd represents the destroy command
 var destroyCmd = &cobra.Command{
-	Use:   "destroy",
+	Use:   "destroy [ENVIRONMENT_NAME | all]",
 	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:`,
+	Long: `Destroy will tear down specified environments. 
+Use the '--burn-it-down' flag to remove environment directories and associated files.`,
+    Example: `
+  # Destroy a specific environment:
+  destroy envName
+  
+  # Destroy all environments:
+  destroy all
+  
+  # Remove environment directories and associated files:
+  destroy envName --burn-it-down
+  
+  # Remove directories and files for all environments:
+  destroy all --burn-it-down
+`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 

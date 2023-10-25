@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 RIPSFORFUN
 
 */
 package cmd
@@ -16,7 +16,7 @@ var rootCmd = &cobra.Command{
     Use:   "glaukos",
 	Short: "",
 	Long: `Glaukos: Lord of the Phishermen
-    A multi-environment creation tool, implementing KasmVNC for remote management and mitmproxy for data collection.`,
+    A multi-environment creation tool, utilizing KasmVNC for remote viewing and mitmproxy for data collection.`,
 }
 
 func Execute() {
@@ -27,7 +27,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 

@@ -28,10 +28,10 @@ RUN update-ca-certificates
 
 WORKDIR /usr/share/kasmvnc/www/app/images/icons
 RUN rm *
-COPY favicon.png .
+COPY glaukos/dockerBuild/favicon.png .
 
 WORKDIR /usr/share/kasmvnc/www
-COPY vnc_visual_fixes.py .
+COPY glaukos/dockerBuild/vnc_visual_fixes.py .
 RUN python3 /usr/share/kasmvnc/www/vnc_visual_fixes.py
 
 WORKDIR /usr/share/kasmvnc/www/dist/images

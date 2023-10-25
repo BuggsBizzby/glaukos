@@ -80,7 +80,7 @@ func init() {
 
 func listAvailableEnvironments() {
     // Defining path to environment directories
-    envPath := "./docker/configs"
+    envPath := "./Glaukos/environments"
 
     // Read directories
     dirs, err := ioutil.ReadDir(envPath)
@@ -99,7 +99,7 @@ func listAvailableEnvironments() {
 
 func destroyAllEnvironments(burnItDown bool) {
     // Defining path to environment directories
-    envDirPath := "./docker/configs"
+    envDirPath := "./Glaukos/environments"
     envDirs, err := os.ReadDir(envDirPath)
     if err != nil {
         log.Printf("Error reading environments directory: %s\n", err)
@@ -132,7 +132,7 @@ func destroyAllEnvironments(burnItDown bool) {
 
 func destroySpecificEnvironment(envName string, burnItDown bool) {
     // Stop specified environment container
-    stopCmd := exec.Command("docker-compose", "-f", fmt.Sprintf("./docker/configs/%s/docker-compose.yml", envName), "down")
+    stopCmd := exec.Command("docker-compose", "-f", fmt.Sprintf("./Glaukos/environments/%s/docker-compose.yml", envName), "down")
     if err := stopCmd.Run(); err != nil {
         log.Printf("Error stopping container for environment: %s: %s\n", envName, err)
     }
@@ -140,7 +140,7 @@ func destroySpecificEnvironment(envName string, burnItDown bool) {
     if burnItDown {
         // Remove environment directory
         // Defining environment directory
-        envPath := fmt.Sprintf("./docker/configs/%s", envName)
+        envPath := fmt.Sprintf("./Glaukos/environments/%s", envName)
         // Removing environment directory and all files
         if err := os.RemoveAll(envPath); err != nil {
             log.Printf("Error removing directory for environment: %s: %s\n", envName, err)
@@ -150,7 +150,7 @@ func destroySpecificEnvironment(envName string, burnItDown bool) {
 
 func removeCaddyfileRoute(envName string) {
     // Read Caddyfile
-    caddyFileContent, err := ioutil.ReadFile("./docker/configs/Caddyfile")
+    caddyFileContent, err := ioutil.ReadFile("./Glaukos/Caddyfile")
     if err != nil {
         log.Fatalf("Failed to read Caddyfile: %s", err)
     }
@@ -158,7 +158,7 @@ func removeCaddyfileRoute(envName string) {
     // If all environments are to be destroyed, reset Caddyfile
     if envName == "all" {
         // Wipe Caddyfile clean
-        err = ioutil.WriteFile("./docker/configs/Caddyfile", []byte(""), 0777)
+        err = ioutil.WriteFile("./Glaukos/Caddyfile", []byte(""), 0777)
         if err != nil {
             log.Fatalf("Failed to reset Caddyfile: %s", err)
         }
@@ -173,7 +173,7 @@ func removeCaddyfileRoute(envName string) {
 
         updatedContent := re.ReplaceAllString(string(caddyFileContent), "")
         
-        err = ioutil.WriteFile("./docker/configs/Caddyfile", []byte(updatedContent), 0777)
+        err = ioutil.WriteFile("./Glaukos/Caddyfile", []byte(updatedContent), 0777)
         if err != nil {
             log.Fatalf("Failed to remove route from Caddyfile: %s", err)
         }
@@ -181,7 +181,7 @@ func removeCaddyfileRoute(envName string) {
 
 func updateCaddyService() error {
     // Command to take the Caddy service down
-    downCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "down")
+    downCmd := exec.Command("docker-compose", "-f", "./Glaukos/docker-compose-caddy.yml", "down")
     downOutput, downErr := downCmd.CombinedOutput()
     if downErr != nil {
         log.Println("Failed to take Caddy service down:", string(downOutput))
@@ -189,7 +189,7 @@ func updateCaddyService() error {
     }
 
     // Command to bring Caddy service back up
-    upCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "up", "-d")
+    upCmd := exec.Command("docker-compose", "-f", "./Glaukos/docker-compose-caddy.yml", "up", "-d")
     upOutput, upErr := upCmd.CombinedOutput()
     if upErr != nil {
         log.Println("Failed to bring Caddy service up:", string(upOutput))

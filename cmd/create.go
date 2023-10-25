@@ -1,10 +1,11 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 RIPSFORFUN
 
 */
 package cmd
 
 import (
+    "glaukos/embed"
 	"fmt"
     "strings"
 	"github.com/spf13/cobra"
@@ -55,7 +56,7 @@ var createCmd = &cobra.Command{
             }
         // Check if no path naming scheme has been provided, if so throw an error.
         } else {
-            fmt.Println("Path naming scheme not defined: You must provide either prefix or names.")
+            fmt.Println("Path naming scheme not defined: You must provide either the prefix or names argument.")
             return
         }
 	},
@@ -134,17 +135,15 @@ func createEnvironment(name, targetURL, siteAddress string) {
 // Generate docker-compose.yml from template file
 func generateCompose(envName string) string {
     // Read content from docker-compose template file in ./docker
-    composeContent, err := ioutil.ReadFile("./docker/docker-compose-template.yml")
-    if err != nil {
-        log.Printf("Failed to read docker-compose template. Error %s\n", err)
-        return ""
-    }
+    composeContent := embed.DockerComposeTemplate
+
+
     // Modify docker-compose template with user supplied environment names
     modifiedCompose := strings.ReplaceAll(string(composeContent), "{{env_name}}", envName)
     
 
     // Create unique directory for new environment's config files
-    configDir := fmt.Sprintf("./docker/configs/%s", envName)
+    configDir := fmt.Sprintf("./Glaukos/environments/%s", envName)
     if err := os.MkdirAll(configDir, 0777); err != nil {
         log.Printf("Failed to create config directory. Error: %s\n", err)
         return ""
@@ -156,13 +155,19 @@ func generateCompose(envName string) string {
         return ""
     }
 
+    // Write docker-compose-caddy.yml file to Glaukos directory
+    caddyComposePath := "./Glaukos/docker-compose-caddy.yml"
+    if err := ioutil.WriteFile(caddyComposePath, []byte(embed.DockerCaddyCompose), 0777); err != nil {
+        log.Printf("Failed to write docker-compose-caddy.yml. Error: %s\n", err)
+        return ""
+    }
 
     return configDir
 }
 
 // Update the Caddyfile
 func updateCaddy(envName, siteAddress string) error {
-    caddyFilePath := "./docker/configs/Caddyfile"
+    caddyFilePath := "./Glaukos/Caddyfile"
 
     // Read contents of Caddyfile template
     caddyContent, err := ioutil.ReadFile(caddyFilePath)
@@ -205,16 +210,9 @@ func updateCaddy(envName, siteAddress string) error {
 
 // Function to reload the caddy instance with the newly modified Caddyfile routes(s)
 func reloadCaddy() error {
-    // Internal service reload (May come back to this)
-//    cmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "exec", "-T", "caddy", "caddy", "reload", "--config", "/etc/caddy/Caddyfile")
-//    output, err := cmd.CombinedOutput()
-//    if err != nil {
-//        log.Println("Failed to reload Caddy:", string(output))
-//        return err
-//    }
     
     // Command to take the Caddy service down
-    downCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "down")
+    downCmd := exec.Command("docker-compose", "-f", "./Glaukos/docker-compose-caddy.yml", "down")
     downOutput, downErr := downCmd.CombinedOutput()
     if downErr != nil {
         log.Println("Failed to take Caddy service down:", string(downOutput))
@@ -222,7 +220,7 @@ func reloadCaddy() error {
     }
 
     // Command to bring Caddy service back up
-    upCmd := exec.Command("docker-compose", "-f", "./docker/docker-compose-caddy.yml", "up", "-d")
+    upCmd := exec.Command("docker-compose", "-f", "./Glaukos/docker-compose-caddy.yml", "up", "-d")
     upOutput, upErr := upCmd.CombinedOutput()
     if upErr != nil {
         log.Println("Failed to bring Caddy service up:", string(upOutput))
@@ -245,10 +243,8 @@ func generateEnvFile(envName, targetURL string) error {
     targetURL)
     
     // Assign configDir to the current environment directory
-    configDir := fmt.Sprintf("./docker/configs/%s", envName)
+    configDir := fmt.Sprintf("./Glaukos/environments/%s", envName)
     // Writing .env file to current environment directory
     err := ioutil.WriteFile(filepath.Join(configDir, ".env"), []byte(content), 0777)
     return err 
 }
-
-

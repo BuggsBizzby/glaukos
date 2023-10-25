@@ -1,16 +1,19 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 RIPSFORFUN
 
 */
 package cmd
 
 import (
+    "glaukos/embed"
 	"fmt"
+    "os"
     "os/exec"
     "log"
     "strings"
 	"github.com/spf13/cobra"
     "io/ioutil"
+    "path/filepath"
 )
 
 // Constants for Docker Images
@@ -22,7 +25,7 @@ const mitmproxyRepo = "python"
 const mitmproxyTag = "3"
 const chromiumRepo = "kasmweb/chromium"
 const chromiumTag = "1.14.0-rolling"
-const caddyCompose = "./docker/docker-compose-caddy.yml"
+const caddyCompose = "./Glaukos/docker-compose-caddy.yml"
 
 
 
@@ -33,6 +36,19 @@ var summonCmd = &cobra.Command{
 	Long: `Build the necessary docker images for the chromium service, mitmproxy service, and Caddy service.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
+
+        // Create Glaukos directory
+        if err := os.MkdirAll("./Glaukos", 0777); err != nil {
+            log.Printf("Failed to create Glaukos directory. Error: %s\n", err)
+            return
+        }
+
+        // Write docker-compose-caddy.yml file to Glaukos directory
+        caddyComposePath := "./Glaukos/docker-compose-caddy.yml"
+        if err := ioutil.WriteFile(caddyComposePath, []byte(embed.DockerCaddyCompose), 0777); err != nil {
+            log.Printf("Failed to write docker-compose-caddy.yml. Error: %s\n", err)
+            return
+        }
 
         // Check if the Docker image already exists
         imageExistsCmd := exec.Command("docker", "image", "ls", "{{.Repository}}::{{.Tag}}")
@@ -98,7 +114,14 @@ func init() {
 
 // Used in Run function to build the desired docker images
 func buildDockerImage(imageName, targetName string) error {
-    cmd := exec.Command("docker", "build", "--file", "Dockerfile", "--target", targetName, "-t", imageName, "./docker")
+    // Prepare dockerBuild directory
+    err := prepareDockerBuildContext()
+    if err != nil {
+        log.Println("Error preparing dockerBuild directory", err)
+        return err
+    }
+
+    cmd := exec.Command("docker", "build", "--file", "./Glaukos/dockerBuild/Dockerfile", "--target", targetName, "-t", imageName, "./Glaukos/dockerBuild")
     output, err := cmd.CombinedOutput()
     if err != nil {
         log.Println(string(output))
@@ -112,10 +135,15 @@ func buildDockerImage(imageName, targetName string) error {
 //  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 // }
 func generateCaddyfile() error {
+    // Ensure Glaukos directory exists
+    if err := os.MkdirAll("./Glaukos", 0777); err != nil {
+        return err
+    }
+
     content := fmt.Sprintf(`
     `)
 
-    return ioutil.WriteFile("./docker/configs/Caddyfile", []byte(content), 0777)
+    return ioutil.WriteFile("./Glaukos/Caddyfile", []byte(content), 0777)
 }
 
 // Used in Run function to create the custom docker network and start the Caddy instance
@@ -134,4 +162,31 @@ func startCaddyInstance() error {
         log.Println(string(output))
     }
     return err
+}
+
+func prepareDockerBuildContext() error {
+    // Define directory path
+    dockerBuildContextDir := "./Glaukos/dockerBuild/"
+
+    // Create dockerBuild directory
+    if err := os.MkdirAll(dockerBuildContextDir, 0777); err != nil {
+        return err
+    }
+
+    // Write Dockerfile to dockerBuild directory
+    if err := ioutil.WriteFile(filepath.Join(dockerBuildContextDir, "Dockerfile"), []byte(embed.DockerfileContent), 0777); err != nil {
+        return err
+    }
+
+    // Write vnc_visual_fixes.py to dockerBuild directory
+    if err := ioutil.WriteFile(filepath.Join(dockerBuildContextDir, "vnc_visual_fixes.py"), []byte(embed.VNCVisualFixes), 0777); err != nil {
+        return err
+    }
+
+    // Write favicon.png to dockerBuild directory
+    if err := ioutil.WriteFile(filepath.Join(dockerBuildContextDir, "favicon.png"), embed.Favicon, 0777); err != nil {
+        return err
+    }
+
+    return nil
 }

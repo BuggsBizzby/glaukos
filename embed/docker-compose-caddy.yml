@@ -13,6 +13,6 @@ services:
     networks:
       - mynet
     volumes:
-      - ./Glaukos/Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile
       - ./caddy_data:/data
       - ./caddy_config:/config

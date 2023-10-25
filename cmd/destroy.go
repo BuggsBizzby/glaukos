@@ -20,7 +20,7 @@ var burnItDownFlag bool
 // destroyCmd represents the destroy command
 var destroyCmd = &cobra.Command{
 	Use:   "destroy [ENVIRONMENT_NAME | all]",
-	Short: "A brief description of your command",
+	Short: "Tear down specified environments",
 	Long: `Destroy will tear down specified environments. 
 Use the '--burn-it-down' flag to remove environment directories and associated files.`,
     Example: `

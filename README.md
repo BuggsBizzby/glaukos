@@ -43,3 +43,16 @@ Once the environments are created you will be able to access them by navigating 
 
 <h3>Destroy</h3>
 Run the <b>destroy</b> command to tear down each of environments, either individually or all at once. Additionally, the --burn-it-down flag can be applied to remove all associated environment directories and files as well.
+<li>all : Positional argument; invokes the removal of all live environments</li>
+<li>-l, --list: Used to list all available environments.</li>
+<li>-b, --burn-it-down: If set, environment directories and associated files will be removed.</li>
+
+```
+glaukos destroy all
+
+glaukos destroy all -b
+
+glaukos destroy document1
+
+glaukos destroy document1 -b
+```

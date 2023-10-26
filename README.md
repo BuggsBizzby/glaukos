@@ -6,7 +6,9 @@ Glaukos is designed to empower security professionals, educators, and enthusiast
 <h2>Installation</h2>
 <h3>Download the latest release</h3>
 Move the binary to a directory with read/write permissions. Execution of the binary will create its own directory `Glaukos` to work out of during operation.
-<h3>Compile your own binary</h3>'
+
+<h3>Compile your own binary</h3>
+
 ```
 git clone [github_path]
 cd glaukos

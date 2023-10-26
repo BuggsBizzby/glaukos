@@ -27,7 +27,7 @@ glaukos summon
 
 <h3>Create</h3>
 Run the <b>create</b> command to create as many environments as your system resources will comfortably allow.
--e, --environments: (Required) Specifies the number of environments to create.
+<li>-e, --environments: (Required) Specifies the number of environments to create.</li>
 -p, --prefix: Provides a prefix for naming environments. When provided, it's appended with a number incrementally (e.g., --prefix test will create environments named test1, test2, etc.). These names are then used as subdomains for routing purposes.
 -n, --names: Instead of using a prefix, you can specify exact names for your environments with this comma-separated list. (e.g., intranet,sharepoint,chocolate)
 -u, --targetURL: (Required) URL of the target website that will be displayed to the victim within the chromium service.
